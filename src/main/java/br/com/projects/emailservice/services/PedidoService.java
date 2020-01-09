@@ -4,10 +4,12 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.stereotype.Service;
 
 import br.com.projects.emailservice.domain.Pedido;
 import br.com.projects.emailservice.repositories.PedidoRepository;
+import br.com.projects.emailservice.services.exceptions.ResourceNotFoundException;
 
 @Service
 public class PedidoService {
@@ -21,8 +23,7 @@ public class PedidoService {
 
 	public Pedido findById(Long id) {
 		Optional<Pedido> pedido = pedidoRepository.findById(id);
-		return pedido.get(); // If a value is present, returns the value, otherwise throws
-								// NoSuchElementException.
+		return pedido.orElseThrow(() -> new ResourceNotFoundException(id));
 	}
 
 	public Pedido insert(Pedido pedido) {
@@ -30,7 +31,11 @@ public class PedidoService {
 	}
 
 	public void delete(Long id) {
-		pedidoRepository.deleteById(id);
+		try {
+			pedidoRepository.deleteById(id);
+		} catch (EmptyResultDataAccessException e) {
+			throw new ResourceNotFoundException(id);
+		}
 	}
 
 	public Pedido update(Long id, Pedido pedido) {
